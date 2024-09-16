@@ -48,7 +48,7 @@
             fileInput.value = '';
 
             // Send message to the back-end
-            const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app', {
+            const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message, file_content: fileContent })
