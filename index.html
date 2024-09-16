@@ -47,20 +47,29 @@
             messageInput.value = '';
             fileInput.value = '';
 
-            // Send message to the back-end
-            const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message, file_content: fileContent })
-            });
-
-            const data = await response.json();
-
-            // Display assistant's reply
-            const assistantMessageDiv = document.createElement('div');
-            assistantMessageDiv.className = 'message assistant';
-            assistantMessageDiv.textContent = 'Assistant: ' + data.reply;
-            chatDiv.appendChild(assistantMessageDiv);
+            try {
+                // Send message to the back-end
+                const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, file_content: fileContent })
+                });
+    
+                const data = await response.json();
+    
+                // Display assistant's reply
+                const assistantMessageDiv = document.createElement('div');
+                assistantMessageDiv.className = 'message assistant';
+                assistantMessageDiv.textContent = 'Assistant: ' + data.reply;
+                chatDiv.appendChild(assistantMessageDiv);
+            catch (error) {
+                console.error('Error during fetch:', error);
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'message assistant';
+                errorMessageDiv.textContent = 'Error: Could not communicate with the assistant.';
+                chatDiv.appendChild(errorMessageDiv);
+            }
+}
 
             // Scroll to the bottom
             chatDiv.scrollTop = chatDiv.scrollHeight;
