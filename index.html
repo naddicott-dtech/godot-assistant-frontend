@@ -62,14 +62,13 @@
                 assistantMessageDiv.className = 'message assistant';
                 assistantMessageDiv.textContent = 'Assistant: ' + data.reply;
                 chatDiv.appendChild(assistantMessageDiv);
-            catch (error) {
+            }catch (error) {
                 console.error('Error during fetch:', error);
                 const errorMessageDiv = document.createElement('div');
                 errorMessageDiv.className = 'message assistant';
                 errorMessageDiv.textContent = 'Error: Could not communicate with the assistant.';
                 chatDiv.appendChild(errorMessageDiv);
             }
-}
 
             // Scroll to the bottom
             chatDiv.scrollTop = chatDiv.scrollHeight;
