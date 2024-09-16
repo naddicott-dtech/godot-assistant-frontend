@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <head>
     <title>Godot Assistant Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
@@ -61,7 +61,7 @@
                 // Display assistant's reply
                 const assistantMessageDiv = document.createElement('div');
                 assistantMessageDiv.className = 'message assistant';
-                assistantMessageDiv.innerHTML = `<b>Assistant:</b> ${marked(data.reply)}`; // Use 'marked' to convert Markdown to HTML
+                assistantMessageDiv.innerHTML = `<b>Assistant:</b> ${marked.parse(data.reply)}`; // Use 'marked' to convert Markdown to HTML
                 chatDiv.appendChild(assistantMessageDiv);
             }catch (error) {
                 console.error('Error during fetch:', error);
