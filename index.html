@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Godot Assistant Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
+        .message { margin: 10px 0; }
+        .user { color: blue; }
+        .assistant { color: green; }
+        #inputArea { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Chat with the Godot Assistant</h1>
+    <div id="chat"></div>
+    <div id="inputArea">
+        <textarea id="messageInput" rows="4" cols="50" placeholder="Type your message here"></textarea><br><br>
+        <input type="file" id="fileInput"><br><br>
+        <button id="sendButton">Send</button>
+    </div>
+
+    <script>
+        const chatDiv = document.getElementById('chat');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const fileInput = document.getElementById('fileInput');
+
+        sendButton.addEventListener('click', async () => {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Display user's message
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message user';
+            userMessageDiv.textContent = 'You: ' + message;
+            chatDiv.appendChild(userMessageDiv);
+
+            // Read file content if a file is selected
+            let fileContent = '';
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileContent = await file.text();
+            }
+
+            // Clear inputs
+            messageInput.value = '';
+            fileInput.value = '';
+
+            // Send message to the back-end
+            const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, file_content: fileContent })
+            });
+
+            const data = await response.json();
+
+            // Display assistant's reply
+            const assistantMessageDiv = document.createElement('div');
+            assistantMessageDiv.className = 'message assistant';
+            assistantMessageDiv.textContent = 'Assistant: ' + data.reply;
+            chatDiv.appendChild(assistantMessageDiv);
+
+            // Scroll to the bottom
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        });
+    </script>
+</body>
+</html>
