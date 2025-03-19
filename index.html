@@ -3,6 +3,7 @@
 <head>
     <title>Godot Assistant Chat</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         #chat { border: 1px solid #ccc; padding: 10px; height: 400px; overflow-y: scroll; }
@@ -13,20 +14,73 @@
     </style>
 </head>
 <body>
-    <h1>Chat with the Godot Assistant</h1>
-    <div id="chat"></div>
-    <div id="inputArea">
-        <textarea id="messageInput" rows="4" cols="50" placeholder="Type your message here"></textarea><br><br>
-        <input type="file" id="fileInput"><br><br>
-        <button id="sendButton">Send</button>
+    <div id="g_id_onload"
+         data-client_id="294482887266-a801ub2fml6usudbh1qvddf1f576r0jc.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
     </div>
+    <div class="g_id_signin" data-type="standard"></div>
 
+    <div id="chatInterface" style="display: none;">
+        <button id="newConversationButton">New Conversation</button>
+        <h1>Chat with Godot Assistant</h1>
+        <div id="chat"></div>
+        <div id="inputArea">
+            <textarea id="messageInput" rows="4" cols="50" placeholder="Type your message here"></textarea><br><br>
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+    
     <script>
         const chatDiv = document.getElementById('chat');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
-        const fileInput = document.getElementById('fileInput');
+        const newConversationButton = document.getElementById('newConversationButton');
 
+        let threadID = null; // Store the thread ID for the current conversation
+        let idToken = '';
+        
+        function handleCredentialResponse(response) {
+            console.log('handleCredentialResponse called');
+            console.log('ID Token received:', response.credential);
+            idToken = response.credential;
+            fetch('https://godot-ai-assistant-v-2-nealaddicott.replit.app/verify-token', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_token: idToken })
+            })
+            .then(res => {
+                console.log('Response status:', res.status);
+                return res.json();
+            })
+            .then(data => {
+                console.log('Data received from backend:', data);
+                if (data.success) {
+                    console.log('Authentication successful, calling showChatInterface');
+                    showChatInterface();
+                } else {
+                    console.warn('Authentication failed:', data);
+                    alert('Authentication failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying token:', error);
+            });
+        }
+
+        function showChatInterface() {
+            console.log('showChatInterface called');
+            document.getElementById('chatInterface').style.display = 'block';
+            document.getElementById('g_id_onload').style.display = 'none';
+            document.querySelector('.g_id_signin').style.display = 'none';
+        }
+        
+        newConversationButton.addEventListener('click', () => {
+            threadID = null;
+            chatDiv.innerHTML = '';
+            messageInput.value = '';
+        });
+        
         sendButton.addEventListener('click', async () => {
             const message = messageInput.value.trim();
             if (!message) return;
@@ -37,41 +91,55 @@
             userMessageDiv.textContent = 'You: ' + message;
             chatDiv.appendChild(userMessageDiv);
 
-            // Read file content if a file is selected
-            let fileContent = '';
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                fileContent = await file.text();
-            }
-
-            // Clear inputs
+            // Clear message input
             messageInput.value = '';
-            fileInput.value = '';
 
             try {
-                // Send message to the back-end
-                const response = await fetch('https://godot-assistant-backend-nealaddicott.replit.app/chat', {
+                // Show a loading indicator
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'message assistant';
+                loadingDiv.textContent = 'Assistant is typing...';
+                chatDiv.appendChild(loadingDiv);
+                
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+                
+                // Send message to the backend
+                const response = await fetch('https://godot-ai-assistant-v-2-nealaddicott.replit.app/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, file_content: fileContent })
+                    body: JSON.stringify({ message, thread_id: threadID }),
+                    id_token: idToken
                 });
     
                 const data = await response.json();
     
-                // Display assistant's reply
-                const assistantMessageDiv = document.createElement('div');
-                assistantMessageDiv.className = 'message assistant';
-                assistantMessageDiv.innerHTML = `<b>Assistant:</b> ${marked.parse(data.reply)}`; // Use 'marked' to convert Markdown to HTML
-                chatDiv.appendChild(assistantMessageDiv);
-            }catch (error) {
+                // Remove the loading indicator
+                chatDiv.removeChild(loadingDiv);
+    
+                if (response.ok) {
+                    if (data.thread_id) {
+                        threadID = data.thread_id;
+                    }
+    
+                    // Display assistant's reply
+                    const assistantMessageDiv = document.createElement('div');
+                    assistantMessageDiv.className = 'message assistant';
+                    assistantMessageDiv.innerHTML = `<b>Assistant:</b> ${marked.parse(data.reply)}`;
+                    chatDiv.appendChild(assistantMessageDiv);
+                } else {
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'message assistant';
+                    errorMessageDiv.textContent = data.error || 'Error: Could not communicate with the assistant.';
+                    chatDiv.appendChild(errorMessageDiv);
+                }
+            } catch (error) {
                 console.error('Error during fetch:', error);
                 const errorMessageDiv = document.createElement('div');
                 errorMessageDiv.className = 'message assistant';
                 errorMessageDiv.textContent = 'Error: Could not communicate with the assistant.';
                 chatDiv.appendChild(errorMessageDiv);
             }
-
-            // Scroll to the bottom
+    
             chatDiv.scrollTop = chatDiv.scrollHeight;
         });
     </script>
