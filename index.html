@@ -11,6 +11,11 @@
         .user { color: blue; }
         .assistant { color: green; }
         #inputArea { margin-top: 20px; }
+        /* Preserve newlines and formatting in code blocks */
+        pre, code {
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -32,6 +37,9 @@
     </div>
     
     <script>
+        // Enable markdown line breaks so newlines are preserved
+        marked.setOptions({ breaks: true });
+
         const chatDiv = document.getElementById('chat');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
@@ -121,7 +129,7 @@
                         threadID = data.thread_id;
                     }
     
-                    // Display assistant's reply
+                    // Display assistant's reply using marked markdown parser
                     const assistantMessageDiv = document.createElement('div');
                     assistantMessageDiv.className = 'message assistant';
                     assistantMessageDiv.innerHTML = `<b>Assistant:</b> ${marked.parse(data.reply)}`;
